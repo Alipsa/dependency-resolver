@@ -1,17 +1,17 @@
-package se.alipsa.groovy.resolver;
+package se.alipsa.groovy.resolver
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.maven.model.building.ModelBuildingException;
-import org.apache.maven.settings.building.SettingsBuildingException;
-import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.resolution.ArtifactResolutionException;
-import se.alipsa.mavenutils.DependenciesResolveException;
-import se.alipsa.mavenutils.MavenUtils;
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
+import org.apache.maven.model.building.ModelBuildingException
+import org.apache.maven.settings.building.SettingsBuildingException
+import org.eclipse.aether.repository.RemoteRepository
+import org.eclipse.aether.resolution.ArtifactResolutionException
+import se.alipsa.mavenutils.DependenciesResolveException
+import se.alipsa.mavenutils.MavenUtils
 
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.Channels
+import java.nio.channels.FileChannel
+import java.nio.channels.ReadableByteChannel
 
 class DependencyResolver {
 

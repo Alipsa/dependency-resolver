@@ -1,0 +1,77 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+plugins {
+  id 'groovy'
+  id 'java-library'
+}
+
+group = 'se.alipsa.groovy'
+version = '1.0.0-SNAPSHOT'
+description = 'A Groovy Dependency Resolver'
+
+java {
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(17))
+  }
+  withSourcesJar()
+  withJavadocJar()
+}
+
+repositories {
+  if (version.contains('SNAPSHOT')) {
+    mavenLocal()
+  }
+  mavenCentral()
+}
+
+dependencies {
+  def log4jVersion = "2.20.0"
+  def groovyVersion = "4.0.15"
+  implementation 'se.alipsa:maven-3.9.4-utils:1.0.3-SNAPSHOT'
+  implementation "org.apache.logging.log4j:log4j-api:${log4jVersion}"
+  implementation "org.apache.logging.log4j:log4j-core:${log4jVersion}"
+  compileOnly("org.apache.groovy:groovy:$groovyVersion")
+
+  testImplementation("org.apache.groovy:groovy:$groovyVersion")
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+  testImplementation("org.apache.groovy:groovy-jsr223:$groovyVersion")
+}
+
+test {
+  useJUnitPlatform()
+  testLogging {
+    // set options for log level LIFECYCLE
+    events TestLogEvent.FAILED,
+        TestLogEvent.PASSED,
+        TestLogEvent.SKIPPED,
+        TestLogEvent.STANDARD_OUT
+    exceptionFormat TestExceptionFormat.FULL
+    showExceptions true
+    showCauses true
+    showStackTraces true
+
+    // set options for log level DEBUG and INFO
+    debug {
+      events TestLogEvent.STARTED,
+          TestLogEvent.FAILED,
+          TestLogEvent.PASSED,
+          TestLogEvent.SKIPPED,
+          TestLogEvent.STANDARD_ERROR,
+          TestLogEvent.STANDARD_OUT
+      exceptionFormat TestExceptionFormat.FULL
+    }
+    info.events = debug.events
+    info.exceptionFormat = debug.exceptionFormat
+
+    afterSuite { desc, result ->
+      if (!desc.parent) { // will match the outermost suite
+        def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+        def startItem = '|  ', endItem = '  |'
+        def repeatLength = startItem.length() + output.length() + endItem.length()
+        println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+      }
+    }
+  }
+}
+
