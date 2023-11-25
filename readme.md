@@ -1,5 +1,8 @@
 # Dependency Resolver
 
+This is a dependency resolver similar to Grapes grab.
+
+The following code:
 ```groovy
     String depScript = '''
     import se.alipsa.groovy.resolver.DependencyResolver
@@ -15,4 +18,8 @@
     def shell = new GroovyShell()
     shell.evaluate(depScript)
     shell.evaluate(script)
+```
+Produces:
+```
+Phone number is valid
 ```
