@@ -1,5 +1,6 @@
 package se.alipsa.groovy.resolver
 
+import groovy.transform.CompileStatic
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.apache.maven.model.building.ModelBuildingException
@@ -13,6 +14,7 @@ import java.nio.channels.Channels
 import java.nio.channels.FileChannel
 import java.nio.channels.ReadableByteChannel
 
+@CompileStatic
 class DependencyResolver {
 
   private static final Logger log = LogManager.getLogger()
@@ -29,7 +31,10 @@ class DependencyResolver {
 
   DependencyResolver(Object caller) {
     this()
-    this.classLoader = caller.getClass().getClassLoader()
+    if (! caller.getClass().getClassLoader() instanceof GroovyClassLoader) {
+      throw new IllegalArgumentException("The calling class must be loaded by the groovy classloader");
+    }
+    this.classLoader = (GroovyClassLoader)caller.getClass().getClassLoader()
   }
 
   void addDependency(String groupId, String artifactId, String version) throws ResolvingException {

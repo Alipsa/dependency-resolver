@@ -1,5 +1,8 @@
 package se.alipsa.groovy.resolver
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class ResolvingException extends Exception {
   ResolvingException() {
     super()

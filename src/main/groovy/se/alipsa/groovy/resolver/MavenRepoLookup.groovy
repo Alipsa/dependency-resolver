@@ -1,5 +1,6 @@
 package se.alipsa.groovy.resolver
 
+import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.w3c.dom.Document
@@ -11,6 +12,7 @@ import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.parsers.ParserConfigurationException
 
+@CompileStatic
 class MavenRepoLookup {
 
   private static final Logger log = LoggerFactory.getLogger(MavenRepoLookup.class)
