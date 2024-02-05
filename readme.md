@@ -1,6 +1,12 @@
 # Dependency Resolver
 
 This is a dependency resolver similar to Grapes grab.
+To use it add the following dependencies to your pom
+```groovy
+implementation('org.apache.groovy:groovy:4.0.18')
+implementation('se.alipsa.groovy:dependency-resolver:1.0.0')
+```
+...or the equivalent for maven, ivy etc.
 
 The following code:
 ```groovy
@@ -23,3 +29,11 @@ Produces:
 ```
 Phone number is valid
 ```
+
+# Release history
+
+### Ver 1.0.1, in progress
+- Compile static for enhanced performance as no dynamic features are used.
+
+### Ver 1.0.0, 2024-Feb-05
+Initial, fully working release
