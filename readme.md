@@ -8,6 +8,7 @@ implementation('se.alipsa.groovy:dependency-resolver:1.0.0')
 ```
 ...or the equivalent for maven, ivy etc.
 
+## Example usage
 The following code:
 ```groovy
     String depScript = '''
