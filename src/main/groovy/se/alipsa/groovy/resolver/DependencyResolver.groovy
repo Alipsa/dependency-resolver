@@ -1,5 +1,6 @@
 package se.alipsa.groovy.resolver
 
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -29,12 +30,18 @@ class DependencyResolver {
     this.classLoader = classLoader
   }
 
-  DependencyResolver(Object caller) {
+  DependencyResolver(Class callingClass) {
     this()
-    if (! caller.getClass().getClassLoader() instanceof GroovyClassLoader) {
+
+    if (! callingClass.getClassLoader() instanceof GroovyClassLoader) {
+      println "Expected a GroovyClassloader but was ${callingClass.getClassLoader()}"
       throw new IllegalArgumentException("The calling class must be loaded by the groovy classloader");
     }
-    this.classLoader = (GroovyClassLoader)caller.getClass().getClassLoader()
+    this.classLoader = (GroovyClassLoader)callingClass.classLoader
+  }
+
+  DependencyResolver(Object caller) {
+    this(caller.getClass())
   }
 
   void addDependency(String groupId, String artifactId, String version) throws ResolvingException {
@@ -51,7 +58,7 @@ class DependencyResolver {
 
     List<File> artifacts = resolve(dep.getGroupId(), dep.getArtifactId(), dep.getVersion());
     if (classLoader == null) {
-      log.error("You must add a GroovyClassloader before adding dependencies");
+      log.error("No classloader available, you must add a GroovyClassloader before adding dependencies");
       throw new ResolvingException("You must add a GroovyClassloader before adding dependencies");
     }
     try {
