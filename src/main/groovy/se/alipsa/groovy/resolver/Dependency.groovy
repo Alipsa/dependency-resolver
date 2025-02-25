@@ -1,5 +1,8 @@
-package se.alipsa.groovy.resolver;
+package se.alipsa.groovy.resolver
 
+import groovy.transform.CompileStatic;
+
+@CompileStatic
 class Dependency {
 
   private String groupId
