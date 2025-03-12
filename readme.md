@@ -30,12 +30,3 @@ Produces:
 ```
 Phone number is valid
 ```
-
-# Release history
-
-### Ver 1.0.1, in progress
-- Compile static for enhanced performance as no dynamic features are used.
-- Upgrade dependencies for logging, junit, groovy
-
-### Ver 1.0.0, 2024-Feb-05
-Initial, fully working release
