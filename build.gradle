@@ -11,7 +11,7 @@ plugins {
 }
 
 group = 'se.alipsa.groovy'
-version = '1.0.2-SNAPSHOT'
+version = '1.0.2'
 description = 'A Groovy Dependency Resolver'
 
 java {
@@ -32,7 +32,7 @@ repositories {
 dependencies {
   def log4jVersion = "2.25.3"
   def groovyVersion = "5.0.4"
-  implementation 'se.alipsa:maven-utils:1.3.1'
+  implementation 'se.alipsa:maven-utils:1.4.0'
   implementation "org.apache.logging.log4j:log4j-api:${log4jVersion}"
   runtimeOnly("org.apache.logging.log4j:log4j-core:${log4jVersion}")
   compileOnly("org.apache.groovy:groovy:$groovyVersion")
