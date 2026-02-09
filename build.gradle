@@ -6,7 +6,7 @@ plugins {
   id 'java-library'
   id 'maven-publish'
   id 'signing'
-  id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
+  id 'se.alipsa.nexus-release-plugin' version '2.0.1'
   id "com.github.ben-manes.versions" version "0.53.0"
 }
 
@@ -30,15 +30,15 @@ repositories {
 }
 
 dependencies {
-  def log4jVersion = "2.25.2"
-  def groovyVersion = "5.0.2"
-  implementation 'se.alipsa:maven-3.9.11-utils:1.0.0'
+  def log4jVersion = "2.25.3"
+  def groovyVersion = "5.0.4"
+  implementation 'se.alipsa:maven-utils:1.3.1'
   implementation "org.apache.logging.log4j:log4j-api:${log4jVersion}"
   runtimeOnly("org.apache.logging.log4j:log4j-core:${log4jVersion}")
   compileOnly("org.apache.groovy:groovy:$groovyVersion")
 
   testImplementation("org.apache.groovy:groovy:$groovyVersion")
-  testImplementation platform('org.junit:junit-bom:6.0.1')
+  testImplementation platform('org.junit:junit-bom:6.0.2')
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.junit.platform:junit-platform-launcher'
   testImplementation("org.apache.groovy:groovy-jsr223:$groovyVersion")
@@ -78,12 +78,6 @@ test {
         println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
       }
     }
-  }
-}
-
-nexusPublishing {
-  repositories {
-    sonatype()
   }
 }
 
@@ -145,5 +139,11 @@ tasks.named("dependencyUpdates").configure {
       }
     }
   }
+}
+
+nexusReleasePlugin {
+  userName = project.ext.properties.sonatypeUsername
+  password = project.ext.properties.sonatypePassword
+  mavenPublication = publishing.publications.maven
 }
 

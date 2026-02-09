@@ -1,6 +1,5 @@
 package se.alipsa.groovy.resolver
 
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger

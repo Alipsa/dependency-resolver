@@ -1,10 +1,10 @@
 # Dependency Resolver
 
-This is a dependency resolver similar to Grapes grab.
+This is a dependency resolver similar to Grapes grab based on se.alipsa:maven-utils.
 To use it add the following dependencies to your pom
 ```groovy
-implementation('org.apache.groovy:groovy:4.0.18')
-implementation('se.alipsa.groovy:dependency-resolver:1.0.0')
+implementation('org.apache.groovy:groovy:5.0.4')
+implementation('se.alipsa.groovy:dependency-resolver:1.0.2')
 ```
 ...or the equivalent for maven, ivy etc.
 
