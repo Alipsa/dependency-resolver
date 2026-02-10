@@ -1,10 +1,13 @@
 package se.alipsa.groovy.resolver
 
 import groovy.transform.CompileStatic
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
 import org.xml.sax.SAXException
+import org.xml.sax.helpers.DefaultHandler
 import se.alipsa.mavenutils.ArtifactLookup
 
 import javax.xml.XMLConstants
@@ -20,6 +23,7 @@ class MavenRepoLookup {
   private static final String EXTERNAL_PARAMETER_ENTITIES = "http://xml.org/sax/features/external-parameter-entities"
   private static final String LOAD_EXTERNAL_DTD = "http://apache.org/xml/features/nonvalidating/load-external-dtd"
 
+  static Logger log = LoggerFactory.getLogger(MavenRepoLookup)
   /**
    * @param dependency in short form, e.g. groupId:artifactId[:type[:classifier]]
    * @param repositoryUrl e.g. <a href="https://repo1.maven.org/maven2/">https://repo1.maven.org/maven2/</a>
@@ -40,6 +44,7 @@ class MavenRepoLookup {
       Dependency artifact = fetchLatestArtifact(dependency, repositoryUrl)
       return toShortDependency(artifact.groupId, artifact.artifactId, artifact.version)
     } catch (RuntimeException e) {
+      log.warn("Failed to fetch latest artifact for $dependency from $repositoryUrl, returning input string. Error: ${e.message}")
       return dependency
     }
   }
@@ -133,6 +138,8 @@ class MavenRepoLookup {
     docFactory.setExpandEntityReferences(false)
     docFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "")
     docFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "")
-    return docFactory.newDocumentBuilder()
+    DocumentBuilder docBuilder = docFactory.newDocumentBuilder()
+    docBuilder.setErrorHandler(new DefaultHandler())
+    return docBuilder
   }
 }

@@ -1,12 +1,12 @@
 package se.alipsa.groovy.resolver
 
 import groovy.transform.CompileStatic
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
 import org.apache.maven.model.building.ModelBuildingException
 import org.apache.maven.settings.building.SettingsBuildingException
 import org.eclipse.aether.repository.RemoteRepository
 import org.eclipse.aether.resolution.ArtifactResolutionException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import se.alipsa.mavenutils.DependenciesResolveException
 import se.alipsa.mavenutils.MavenUtils
 
@@ -20,7 +20,7 @@ import java.nio.file.StandardCopyOption
 @CompileStatic
 class DependencyResolver {
 
-  private static final Logger log = LogManager.getLogger()
+  private static final Logger log = LoggerFactory.getLogger(DependencyResolver)
   private static final int DOWNLOAD_CONNECT_TIMEOUT_MS = 10_000
   private static final int DOWNLOAD_READ_TIMEOUT_MS = 30_000
 

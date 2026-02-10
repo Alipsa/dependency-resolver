@@ -11,7 +11,7 @@ plugins {
 }
 
 group = 'se.alipsa.groovy'
-version = '1.0.2'
+version = '1.0.3-SNAPSHOT'
 description = 'A Groovy Dependency Resolver'
 
 java {
@@ -30,17 +30,17 @@ repositories {
 }
 
 dependencies {
-  def log4jVersion = "2.25.3"
   def groovyVersion = "5.0.4"
-  implementation 'se.alipsa:maven-utils:1.4.0'
-  implementation "org.apache.logging.log4j:log4j-api:${log4jVersion}"
-  runtimeOnly("org.apache.logging.log4j:log4j-core:${log4jVersion}")
+  implementation('se.alipsa:maven-utils:1.4.0')
+  implementation("org.slf4j:slf4j-api:2.0.17")
+  runtimeOnly("org.tinylog:slf4j-tinylog:2.7.0")
+  runtimeOnly("org.tinylog:tinylog-impl:2.7.0")
   compileOnly("org.apache.groovy:groovy:$groovyVersion")
 
   testImplementation("org.apache.groovy:groovy:$groovyVersion")
-  testImplementation platform('org.junit:junit-bom:6.0.2')
-  testImplementation 'org.junit.jupiter:junit-jupiter'
-  testImplementation 'org.junit.platform:junit-platform-launcher'
+  testImplementation(platform('org.junit:junit-bom:6.0.2'))
+  testImplementation('org.junit.jupiter:junit-jupiter')
+  testImplementation('org.junit.platform:junit-platform-launcher')
   testImplementation("org.apache.groovy:groovy-jsr223:$groovyVersion")
 }
 
@@ -53,13 +53,14 @@ test {
   testLogging {
     // set options for log level LIFECYCLE
     events TestLogEvent.FAILED,
-        TestLogEvent.PASSED,
+        //TestLogEvent.PASSED,
         TestLogEvent.SKIPPED,
         TestLogEvent.STANDARD_OUT
     exceptionFormat = TestExceptionFormat.FULL
     showExceptions = true
     showCauses = true
     showStackTraces = true
+    showStandardStreams = true
 
     // set options for log level DEBUG and INFO
     debug {

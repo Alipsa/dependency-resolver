@@ -1,10 +1,10 @@
 package test.alipsa.groovy.resolver
 
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
 import org.codehaus.groovy.jsr223.GroovyScriptEngineImpl
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import se.alipsa.groovy.resolver.DependencyResolver
 import se.alipsa.groovy.resolver.ResolvingException
 
@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*
 
 class DependencyResolverTest {
 
-  private static final Logger log = LogManager.getLogger()
+  private static final Logger log = LoggerFactory.getLogger(DependencyResolverTest)
 
   @Test
   @Tag("integration")

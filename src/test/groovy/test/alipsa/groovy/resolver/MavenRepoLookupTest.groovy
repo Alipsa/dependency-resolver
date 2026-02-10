@@ -77,6 +77,18 @@ class MavenRepoLookupTest {
   }
 
   @Test
+  void testFetchLatestArtifactShortStringReturnsInputOnCorruptMetadata() {
+    String corruptMetadata = "<metadata><versioning><release>1.2.3</release></versioning>"
+    HttpServer server = startMetadataServer(corruptMetadata, 200)
+    try {
+      String dep = "com.example:demo:1.0.0"
+      assertEquals(dep, MavenRepoLookup.fetchLatestArtifactShortString(dep, repositoryUrl(server)))
+    } finally {
+      server.stop(0)
+    }
+  }
+
+  @Test
   void testFetchVersions() {
     String metadata = """<?xml version="1.0" encoding="UTF-8"?>
 <metadata>
@@ -115,6 +127,19 @@ class MavenRepoLookupTest {
 </metadata>
 """
     HttpServer server = startMetadataServer(metadata, 200)
+    try {
+      assertThrows(SAXException) {
+        MavenRepoLookup.fetchVersions("com.example", "demo", repositoryUrl(server))
+      }
+    } finally {
+      server.stop(0)
+    }
+  }
+
+  @Test
+  void testFetchVersionsThrowsOnCorruptMetadata() {
+    String corruptMetadata = "<metadata><versioning><versions><version>1.0.0</version></versions>"
+    HttpServer server = startMetadataServer(corruptMetadata, 200)
     try {
       assertThrows(SAXException) {
         MavenRepoLookup.fetchVersions("com.example", "demo", repositoryUrl(server))
