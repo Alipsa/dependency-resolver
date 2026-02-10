@@ -1,51 +1,46 @@
-package test.alipsa.groovy.resolver;
+package test.alipsa.groovy.resolver
 
-import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.codehaus.groovy.jsr223.GroovyScriptEngineImpl;
-import org.junit.jupiter.api.Test;
+import org.codehaus.groovy.jsr223.GroovyScriptEngineImpl
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
 import se.alipsa.groovy.resolver.DependencyResolver
 import se.alipsa.groovy.resolver.ResolvingException
 
 import javax.script.ScriptEngine
-import javax.script.ScriptEngineManager;
+import javax.script.ScriptEngineManager
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*
 
 class DependencyResolverTest {
 
   private static final Logger log = LogManager.getLogger()
 
   @Test
+  @Tag("integration")
   void testResolveDependency() throws ResolvingException {
     DependencyResolver resolver = new DependencyResolver()
-
     List<File> dependencies = resolver.resolve("org.apache.commons:commons-lang3:3.13.0")
     assertEquals(1, dependencies.size())
+    assertTrue(dependencies.every { it.exists() })
   }
 
   @Test
+  @Tag("integration")
   void testResolveNonLocalDependency() throws IOException, ResolvingException {
     DependencyResolver resolver = new DependencyResolver()
-    File libPhoneNumberDir = new File(System.getProperty("user.home"), "/.m2/repository/com/googlecode/libphonenumber")
-    if (libPhoneNumberDir.exists()) {
-      log.info("Deleting existing " + libPhoneNumberDir)
-      libPhoneNumberDir.deleteDir()
-    }
-
-    log.info("Resolving libphonenumber:8.13.26");
+    log.info("Resolving libphonenumber:8.13.26")
     List<File> dependencies = resolver.resolve("com.googlecode.libphonenumber:libphonenumber:8.13.26")
-    File dir = new File(libPhoneNumberDir, "/libphonenumber/8.13.26")
-    List<String> fileNames = List.of("libphonenumber-8.13.26.jar", "libphonenumber-8.13.26.jar.sha1", "libphonenumber-8.13.26.pom")
     assertEquals(1, dependencies.size())
-    Arrays.asList(dir.listFiles()).forEach(f -> {
-      if (!"_remote.repositories".equals(f.getName())) {
-        assertTrue(fileNames.contains(f.getName()), f.getName() + " was unexpected");
-      }
-    })
+    File jarFile = dependencies.first()
+    File pomFile = new File(jarFile.parentFile, jarFile.name.replace(".jar", ".pom"))
+    assertTrue(jarFile.exists(), "Expected ${jarFile.absolutePath} to exist")
+    assertTrue(pomFile.exists(), "Expected ${pomFile.absolutePath} to exist")
   }
 
   @Test
+  @Tag("integration")
   void testAddToClasspath() {
     String depScript = '''
     import se.alipsa.groovy.resolver.DependencyResolver
@@ -56,7 +51,7 @@ class DependencyResolverTest {
     import com.google.i18n.phonenumbers.PhoneNumberUtil
     def numberUtil = PhoneNumberUtil.getInstance()
     def phoneNumber = numberUtil.parse('+46 70 12 23 198', 'SE')
-    println "Phone number is ${numberUtil.isValidNumber(phoneNumber) ? '' : 'NOT '}valid"
+    assert numberUtil.isValidNumber(phoneNumber)
     '''
     def shell = new GroovyShell()
     shell.evaluate(depScript)
@@ -70,5 +65,13 @@ class DependencyResolverTest {
     GroovyScriptEngineImpl groovyScriptEngine = new GroovyScriptEngineImpl()
     groovyScriptEngine.eval(depScript)
     groovyScriptEngine.eval(script)
+  }
+
+  @Test
+  void testConstructorRejectsNonGroovyClassLoader() {
+    IllegalArgumentException ex = assertThrows(IllegalArgumentException) {
+      new DependencyResolver(String.class)
+    }
+    assertTrue(ex.message.contains("groovy classloader"))
   }
 }

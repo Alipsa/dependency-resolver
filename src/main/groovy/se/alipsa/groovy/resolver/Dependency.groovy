@@ -1,6 +1,6 @@
 package se.alipsa.groovy.resolver
 
-import groovy.transform.CompileStatic;
+import groovy.transform.CompileStatic
 
 @CompileStatic
 class Dependency {
@@ -21,7 +21,7 @@ class Dependency {
   Dependency(String dependencyString) {
     var parts = dependencyString.split(":")
     if (parts.length != 3) {
-      throw new IllegalArgumentException("Incorrect format for dependency for " + dependencyString);
+      throw new IllegalArgumentException("Incorrect format for dependency for $dependencyString")
     }
     this.groupId = parts[0]
     this.artifactId = parts[1]
@@ -54,6 +54,6 @@ class Dependency {
 
   @Override
   String toString() {
-    return groupId + ":" + artifactId + ":" + version
+    return "$groupId:$artifactId:$version"
   }
 }

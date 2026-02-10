@@ -10,14 +10,19 @@ import org.eclipse.aether.resolution.ArtifactResolutionException
 import se.alipsa.mavenutils.DependenciesResolveException
 import se.alipsa.mavenutils.MavenUtils
 
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.channels.Channels
 import java.nio.channels.FileChannel
 import java.nio.channels.ReadableByteChannel
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 @CompileStatic
 class DependencyResolver {
 
   private static final Logger log = LogManager.getLogger()
+  private static final int DOWNLOAD_CONNECT_TIMEOUT_MS = 10_000
+  private static final int DOWNLOAD_READ_TIMEOUT_MS = 30_000
 
   private GroovyClassLoader classLoader = null
 
@@ -32,109 +37,122 @@ class DependencyResolver {
   DependencyResolver(Class callingClass) {
     this()
 
-    if (! callingClass.getClassLoader() instanceof GroovyClassLoader) {
-      println "Expected a GroovyClassloader but was ${callingClass.getClassLoader()}"
-      throw new IllegalArgumentException("The calling class must be loaded by the groovy classloader");
+    if (!(callingClass.classLoader instanceof GroovyClassLoader)) {
+      log.warn("Expected a GroovyClassloader but was {}", callingClass.classLoader)
+      throw new IllegalArgumentException("The calling class must be loaded by the groovy classloader")
     }
     this.classLoader = (GroovyClassLoader)callingClass.classLoader
   }
 
   DependencyResolver(Object caller) {
-    this(caller.getClass())
+    this(caller.class)
   }
 
   void addDependency(String groupId, String artifactId, String version) throws ResolvingException {
-    Dependency dep = new Dependency(groupId, artifactId, version);
-    addDependency(dep);
+    addDependency(new Dependency(groupId, artifactId, version))
   }
 
   void addDependency(String dependency) throws ResolvingException {
-    Dependency dep = new Dependency(dependency);
-    addDependency(dep);
+    addDependency(new Dependency(dependency))
   }
 
   void addDependency(Dependency dep) throws ResolvingException {
-
-    List<File> artifacts = resolve(dep.getGroupId(), dep.getArtifactId(), dep.getVersion());
+    List<File> artifacts = resolve(dep.groupId, dep.artifactId, dep.version)
     if (classLoader == null) {
-      log.error("No classloader available, you must add a GroovyClassloader before adding dependencies");
-      throw new ResolvingException("You must add a GroovyClassloader before adding dependencies");
+      log.error("No classloader available, you must add a GroovyClassloader before adding dependencies")
+      throw new ResolvingException("You must add a GroovyClassloader before adding dependencies")
     }
     try {
       for (File artifact : artifacts) {
-        classLoader.addURL(artifact.toURI().toURL());
+        classLoader.addURL(artifact.toURI().toURL())
       }
     } catch (MalformedURLException e) {
-      log.warn("Failed to convert the downloaded file to a URL", e);
-      throw new ResolvingException("Failed to convert the downloaded file to a URL", e);
+      log.warn("Failed to convert the downloaded file to a URL", e)
+      throw new ResolvingException("Failed to convert the downloaded file to a URL", e)
     }
   }
 
   List<File> resolve(String groupId, String artifactId, String version) throws ResolvingException {
-    List<File> jarFiles = new ArrayList<>()
+    List<File> jarFiles = []
     resolve(new Dependency(groupId, artifactId, version), jarFiles)
-    return jarFiles
+    jarFiles
   }
 
   List<File> resolve(String dependency) throws ResolvingException {
-    List<File> jarFiles = new ArrayList<>()
+    List<File> jarFiles = []
     resolve(new Dependency(dependency), jarFiles)
-    return jarFiles
+    jarFiles
   }
 
   void resolve(Dependency dependency, List<File> jarFiles) throws ResolvingException {
-    MavenUtils mavenUtils = new MavenUtils();
-    File artifact;
+    MavenUtils mavenUtils = new MavenUtils()
+    File artifact
     try {
       artifact = mavenUtils.resolveArtifact(
-          dependency.getGroupId(),
-          dependency.getArtifactId(),
+          dependency.groupId,
+          dependency.artifactId,
           null,
           "jar",
-          dependency.getVersion()
-      );
+          dependency.version
+      )
     } catch (SettingsBuildingException | ArtifactResolutionException e) {
-      log.warn("Failed to resolve artifact " + dependency);
-      throw new ResolvingException("Failed to resolve artifact " + dependency);
+      log.warn("Failed to resolve artifact {}", dependency)
+      throw new ResolvingException("Failed to resolve artifact $dependency")
     }
-    jarFiles.add(artifact);
-    File pomFile = new File(artifact.getParent(), artifact.getName().replace(".jar", ".pom"));
+    jarFiles << artifact
+    File pomFile = new File(artifact.parent, artifact.name.replace(".jar", ".pom"))
     if (!pomFile.exists()) {
-      String url;
-      for (RemoteRepository remoteRepository : mavenUtils.getRemoteRepositories()) {
-        url = MavenRepoLookup.pomUrl(dependency, remoteRepository.getUrl());
-        log.debug("Trying {}", url);
+      String url
+      for (RemoteRepository remoteRepository : mavenUtils.remoteRepositories) {
+        url = MavenRepoLookup.pomUrl(dependency, remoteRepository.url)
+        log.debug("Trying {}", url)
         try {
-          download(url, pomFile);
-          log.debug("Download of {} successful", url);
-          break;
+          download(url, pomFile)
+          log.debug("Download of {} successful", url)
+          break
         } catch (IOException ignored) {
-          log.debug("Download of {} failed", url);
+          log.debug("Download of {} failed", url)
         }
       }
       if (!pomFile.exists()) {
-        throw new ResolvingException("Failed to resolve pom file (" + pomFile + ") for " + dependency);
+        throw new ResolvingException("Failed to resolve pom file ($pomFile) for $dependency")
       }
     }
     try {
       for (File file : mavenUtils.resolveDependencies(pomFile)) {
-        if (file.getName().toLowerCase().endsWith(".jar")) {
-          jarFiles.add(file);
+        if (file.name.toLowerCase().endsWith(".jar")) {
+          jarFiles << file
         }
       }
     } catch (SettingsBuildingException | ModelBuildingException | DependenciesResolveException e) {
-      log.warn("Failed to resolve pom file " + pomFile);
-      throw new ResolvingException("Failed to resolve pom file " + pomFile);
+      log.warn("Failed to resolve pom file {}", pomFile)
+      throw new ResolvingException("Failed to resolve pom file $pomFile")
     }
   }
 
   private void download(String urlString, File localFilename) throws IOException {
-    URL url = new URL(urlString);
-    try (
-        ReadableByteChannel readableByteChannel = Channels.newChannel(url.openStream());
-        FileOutputStream fileOutputStream = new FileOutputStream(localFilename);
-        FileChannel fileChannel = fileOutputStream.getChannel()) {
-      fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+    URL url = new URL(urlString)
+    URLConnection connection = url.openConnection()
+    connection.setConnectTimeout(DOWNLOAD_CONNECT_TIMEOUT_MS)
+    connection.setReadTimeout(DOWNLOAD_READ_TIMEOUT_MS)
+    File tempFile = File.createTempFile(localFilename.name, ".part", localFilename.parentFile)
+    try {
+      try (
+          InputStream inputStream = connection.getInputStream()
+          ReadableByteChannel readableByteChannel = Channels.newChannel(inputStream)
+          FileOutputStream fileOutputStream = new FileOutputStream(tempFile)
+          FileChannel fileChannel = fileOutputStream.getChannel()) {
+        fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE)
+      }
+      try {
+        Files.move(tempFile.toPath(), localFilename.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+      } catch (AtomicMoveNotSupportedException ignored) {
+        Files.move(tempFile.toPath(), localFilename.toPath(), StandardCopyOption.REPLACE_EXISTING)
+      }
+    } finally {
+      if (tempFile.exists()) {
+        tempFile.delete()
+      }
     }
   }
 }

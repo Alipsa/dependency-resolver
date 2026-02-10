@@ -30,3 +30,14 @@ Produces:
 ```
 Phone number is valid
 ```
+
+## Tests
+Run fast, hermetic tests (default):
+```bash
+./gradlew test
+```
+
+Run network-dependent integration tests:
+```bash
+./gradlew integrationTest
+```

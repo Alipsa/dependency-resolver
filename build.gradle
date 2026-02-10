@@ -11,7 +11,7 @@ plugins {
 }
 
 group = 'se.alipsa.groovy'
-version = '1.0.2'
+version = '1.0.2-SNAPSHOT'
 description = 'A Groovy Dependency Resolver'
 
 java {
@@ -45,7 +45,11 @@ dependencies {
 }
 
 test {
-  useJUnitPlatform()
+  useJUnitPlatform {
+    if (!project.hasProperty("includeIntegrationTests")) {
+      excludeTags "integration"
+    }
+  }
   testLogging {
     // set options for log level LIFECYCLE
     events TestLogEvent.FAILED,
@@ -79,6 +83,23 @@ test {
       }
     }
   }
+}
+
+tasks.register("integrationTest", Test) {
+  description = "Runs integration tests that require network and dependency downloads"
+  group = "verification"
+  testClassesDirs = sourceSets.test.output.classesDirs
+  classpath = sourceSets.test.runtimeClasspath
+  def testMavenRepoDir = layout.buildDirectory.dir("integration-test-m2-repo").get().asFile
+  systemProperty "maven.repo.local", testMavenRepoDir.absolutePath
+  useJUnitPlatform {
+    includeTags "integration"
+  }
+  doFirst {
+    delete(testMavenRepoDir)
+    testMavenRepoDir.mkdirs()
+  }
+  shouldRunAfter test
 }
 
 publishing {
@@ -146,4 +167,3 @@ nexusReleasePlugin {
   password = project.ext.properties.sonatypePassword
   mavenPublication = publishing.publications.maven
 }
-
