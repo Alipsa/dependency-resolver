@@ -11,7 +11,7 @@ plugins {
 }
 
 group = 'se.alipsa.groovy'
-version = '1.0.3-SNAPSHOT'
+version = '1.0.2-SNAPSHOT'
 description = 'A Groovy Dependency Resolver'
 
 java {
