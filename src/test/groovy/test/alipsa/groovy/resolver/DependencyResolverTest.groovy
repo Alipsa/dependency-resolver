@@ -68,6 +68,17 @@ class DependencyResolverTest {
   }
 
   @Test
+  void testURLClassLoaderConstructor() {
+    // When a GroovyClassLoader is held in a URLClassLoader-typed variable,
+    // the URLClassLoader constructor should be selected instead of falling
+    // through to DependencyResolver(Object), which would incorrectly call
+    // cl.getClass().getClassLoader().
+    URLClassLoader cl = new GroovyClassLoader()
+    DependencyResolver resolver = new DependencyResolver(cl)
+    assertNotNull(resolver)
+  }
+
+  @Test
   void testConstructorRejectsNonGroovyClassLoader() {
     IllegalArgumentException ex = assertThrows(IllegalArgumentException) {
       new DependencyResolver(String.class)

@@ -1,5 +1,6 @@
 package se.alipsa.groovy.resolver
 
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.maven.model.building.ModelBuildingException
 import org.apache.maven.settings.building.SettingsBuildingException
@@ -24,12 +25,16 @@ class DependencyResolver {
   private static final int DOWNLOAD_CONNECT_TIMEOUT_MS = 10_000
   private static final int DOWNLOAD_READ_TIMEOUT_MS = 30_000
 
-  private GroovyClassLoader classLoader = null
+  private URLClassLoader classLoader = null
 
   DependencyResolver() {
   }
 
   DependencyResolver(GroovyClassLoader classLoader) {
+    this((URLClassLoader) classLoader)
+  }
+
+  DependencyResolver(URLClassLoader classLoader) {
     this()
     this.classLoader = classLoader
   }
@@ -59,17 +64,22 @@ class DependencyResolver {
   void addDependency(Dependency dep) throws ResolvingException {
     List<File> artifacts = resolve(dep.groupId, dep.artifactId, dep.version)
     if (classLoader == null) {
-      log.error("No classloader available, you must add a GroovyClassloader before adding dependencies")
-      throw new ResolvingException("You must add a GroovyClassloader before adding dependencies")
+      log.error("No classloader available, you must add a URLClassLoader (e.g. GroovyClassLoader) before adding dependencies")
+      throw new ResolvingException("You must add a URLClassLoader (e.g. GroovyClassLoader) before adding dependencies")
     }
     try {
       for (File artifact : artifacts) {
-        classLoader.addURL(artifact.toURI().toURL())
+        addURLToClassLoader(artifact.toURI().toURL())
       }
     } catch (MalformedURLException e) {
       log.warn("Failed to convert the downloaded file to a URL", e)
       throw new ResolvingException("Failed to convert the downloaded file to a URL", e)
     }
+  }
+
+  @CompileDynamic
+  private void addURLToClassLoader(URL url) {
+    classLoader.addURL(url)
   }
 
   List<File> resolve(String groupId, String artifactId, String version) throws ResolvingException {
