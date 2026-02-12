@@ -4,7 +4,7 @@ This is a dependency resolver similar to Grapes grab based on se.alipsa:maven-ut
 To use it add the following dependencies to your pom
 ```groovy
 implementation('org.apache.groovy:groovy:5.0.4')
-implementation('se.alipsa.groovy:dependency-resolver:1.0.2')
+implementation('se.alipsa.groovy:dependency-resolver:1.1.0')
 ```
 ...or the equivalent for maven, ivy etc.
 

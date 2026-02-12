@@ -1,6 +1,6 @@
 # Dependency-resolver release history
 
-## v1.0.2, in progress
+## v1.1.0, 2026-02-12
 - Upgrade dependencies
   - log4j 2.20.0 -> 2.25.2
   - maven-3.9.4-utils -> maven-utils
@@ -8,6 +8,7 @@
 - delegate latest artifact resolution to `maven-utils` `ArtifactLookup` to reduce duplicated logic
 - Harden resolution internals (secure XML parsing, classloader guard fix, timeout-bounded and atomic pom downloads)
 - split tests into default hermetic tests and opt-in `integrationTest` network tests
+- Add constructor overloads for `DependencyResolver` that accept a `ClassLoader` or `URLClassLoader` to allow more flexible usage outside GroovyShell contexts
 
 ## v1.0.1, 2025-03-12
 - Compile static for enhanced performance as no dynamic features are used.
