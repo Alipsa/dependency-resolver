@@ -39,14 +39,22 @@ class DependencyResolver {
     this.classLoader = classLoader
   }
 
+  DependencyResolver(ClassLoader classLoader) {
+    this()
+    if (!(classLoader instanceof URLClassLoader)) {
+      log.warn("Expected a URLClassloader but was {}", classLoader)
+      throw new IllegalArgumentException("The classloader must be a URLClassLoader (e.g. GroovyClassLoader)")
+    }
+    this.classLoader = classLoader as URLClassLoader
+  }
+
   DependencyResolver(Class callingClass) {
     this()
-
-    if (!(callingClass.classLoader instanceof GroovyClassLoader)) {
-      log.warn("Expected a GroovyClassloader but was {}", callingClass.classLoader)
+    if (!(callingClass.classLoader instanceof URLClassLoader)) {
+      log.warn("Expected a URLClassLoader but was {}", callingClass.classLoader)
       throw new IllegalArgumentException("The calling class must be loaded by the groovy classloader")
     }
-    this.classLoader = (GroovyClassLoader)callingClass.classLoader
+    this.classLoader = callingClass.classLoader as URLClassLoader
   }
 
   DependencyResolver(Object caller) {

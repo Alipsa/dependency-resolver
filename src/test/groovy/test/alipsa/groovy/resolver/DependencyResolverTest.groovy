@@ -1,5 +1,6 @@
 package test.alipsa.groovy.resolver
 
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.jsr223.GroovyScriptEngineImpl
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -10,12 +11,32 @@ import se.alipsa.groovy.resolver.ResolvingException
 
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
+import java.nio.file.Files
 
 import static org.junit.jupiter.api.Assertions.*
 
+/**
+ * These tests are primarily intended to verify that the DependencyResolver can be used in various contexts
+ * (GroovyShell, JSR223, GroovyScriptEngine) and that the constructor correctly identifies and rejects non-GroovyClassLoader classloaders.
+ *
+ * The tests that resolves dependencies from remote repositories are tagged as "integration" since they require network access and may be slower.
+ */
 class DependencyResolverTest {
 
   private static final Logger log = LoggerFactory.getLogger(DependencyResolverTest)
+
+  String depScript = '''
+    import se.alipsa.groovy.resolver.DependencyResolver
+    def resolver = new DependencyResolver(this)
+    resolver.addDependency('com.googlecode.libphonenumber:libphonenumber:8.13.26')    
+    '''
+
+  String script = '''
+    import com.google.i18n.phonenumbers.PhoneNumberUtil
+    def numberUtil = PhoneNumberUtil.getInstance()
+    def phoneNumber = numberUtil.parse('+46 70 12 23 198', 'SE')
+    numberUtil.isValidNumber(phoneNumber)
+    '''
 
   @Test
   @Tag("integration")
@@ -41,31 +62,47 @@ class DependencyResolverTest {
 
   @Test
   @Tag("integration")
-  void testAddToClasspath() {
-    String depScript = '''
-    import se.alipsa.groovy.resolver.DependencyResolver
-    def resolver = new DependencyResolver(this)
-    resolver.addDependency('com.googlecode.libphonenumber:libphonenumber:8.13.26')    
-    '''
-    String script = '''
-    import com.google.i18n.phonenumbers.PhoneNumberUtil
-    def numberUtil = PhoneNumberUtil.getInstance()
-    def phoneNumber = numberUtil.parse('+46 70 12 23 198', 'SE')
-    assert numberUtil.isValidNumber(phoneNumber)
-    '''
+  void testAddToClasspathShell() {
     def shell = new GroovyShell()
     shell.evaluate(depScript)
-    shell.evaluate(script)
+    def result = shell.evaluate(script)
+    assertTrue(result as Boolean, "Expected script to evaluate to true but was ${result}")
+  }
+
+  @Test
+  @Tag("integration")
+  void testAddToClasspathJsr223() {
 
     ScriptEngineManager factory = new ScriptEngineManager()
     ScriptEngine engine = factory.getEngineByName("groovy")
     engine.eval(depScript)
-    engine.eval(script)
+    def result = engine.eval(script)
+    assertTrue(result as Boolean, "Expected script to evaluate to true but was ${result}")
 
-    GroovyScriptEngineImpl groovyScriptEngine = new GroovyScriptEngineImpl()
-    groovyScriptEngine.eval(depScript)
-    groovyScriptEngine.eval(script)
+    GroovyScriptEngineImpl gseJsr223 = new GroovyScriptEngineImpl()
+    gseJsr223.eval(depScript)
+    result = gseJsr223.eval(script)
+    assertTrue(result as Boolean, "Expected script to evaluate to true but was ${result}")
   }
+
+  @Test
+  @Tag("integration")
+  void testAddToClasspathScriptEngine() {
+    File tempDir = Files.createTempDirectory("groovy-scripts").toFile()
+    File deptScriptFile = new File(tempDir, "deptScript.groovy")
+    File scriptFile = new File(tempDir, "script.groovy")
+    deptScriptFile.text = depScript
+    scriptFile.text = script
+    URL[] roots = [tempDir.toURI().toURL()]
+    GroovyScriptEngine gse = new GroovyScriptEngine(roots)
+    def binding = new Binding()
+    def depResult = gse.run(deptScriptFile.getName(), binding)
+    assertNull(depResult)
+    def scriptResult = gse.run(scriptFile.getName(), binding)
+    assertTrue(scriptResult as Boolean, "Expected script to evaluate to true but was ${scriptResult}")
+    tempDir.deleteDir()
+  }
+
 
   @Test
   void testURLClassLoaderConstructor() {
@@ -79,10 +116,46 @@ class DependencyResolverTest {
   }
 
   @Test
+  @CompileStatic
+  void testObjectConstructorGroovyClassLoader() {
+    ClassLoader cl = new GroovyClassLoader()
+    DependencyResolver resolver = new DependencyResolver(cl)
+    assertNotNull(resolver, "Expected constructor to succeed when given a GroovyClassLoader as a ClassLoader")
+
+    def nonUrlLoader = new ClassLoader() {
+      @Override
+      protected Class<?> findClass(String name) throws ClassNotFoundException {
+        // You can leave this empty for a "rainy day" failure test
+        // or implement logic to load bytes from a Map/String.
+        throw new ClassNotFoundException(name)
+      }
+    }
+
+    assertThrows(IllegalArgumentException,
+        () -> new DependencyResolver(nonUrlLoader),
+        "Expected constructor to throw IllegalArgumentException when given a non-URLClassLoader"
+    )
+  }
+
+  @Test
+  void testObjectCallerConstructor() {
+    GroovyClassLoader gcl = new GroovyClassLoader()
+    Class<?> clazz = gcl.parseClass("class Dummy {}")
+    Object dummyObject = clazz.getDeclaredConstructor().newInstance()
+    DependencyResolver resolver = new DependencyResolver(dummyObject)
+    assertNotNull(resolver, "The constructor should succeed when given an object whose class is loaded by a GroovyClassLoader")
+  }
+
+  @Test
   void testConstructorRejectsNonGroovyClassLoader() {
     IllegalArgumentException ex = assertThrows(IllegalArgumentException) {
       new DependencyResolver(String.class)
     }
     assertTrue(ex.message.contains("groovy classloader"))
+
+    // Rainy day test to verify that the Object constructor from a non-Groovy class also throws the expected exception
+    assertThrows(IllegalArgumentException) {
+      new DependencyResolver("Hello")
+    }
   }
 }

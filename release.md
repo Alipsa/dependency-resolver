@@ -4,7 +4,7 @@
 - Upgrade dependencies
   - log4j 2.20.0 -> 2.25.2
   - maven-3.9.4-utils -> maven-utils
-  - gradle 9,2,0 -> 9.3.1
+  - gradle 9.2.0 -> 9.3.1
 - delegate latest artifact resolution to `maven-utils` `ArtifactLookup` to reduce duplicated logic
 - Harden resolution internals (secure XML parsing, classloader guard fix, timeout-bounded and atomic pom downloads)
 - split tests into default hermetic tests and opt-in `integrationTest` network tests

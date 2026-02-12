@@ -23,4 +23,4 @@ if [[ "$java_major" != "17" ]]; then
   exit 1
 fi
 
-./gradlew clean release
+./gradlew -PincludeIntegrationTests clean release
